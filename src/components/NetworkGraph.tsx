@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { MedicalRecord } from '../types';
+import { useSettings } from '../context/SettingsContext';
 
 interface NetworkGraphProps {
   data: MedicalRecord[];
 }
 
 export const NetworkGraph: React.FC<NetworkGraphProps> = ({ data }) => {
+  const { t, theme, accentColor } = useSettings();
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
@@ -72,17 +74,21 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({ data }) => {
       g.attr('transform', e.transform);
     }) as any);
 
+    const isDark = theme === 'dark';
+    const linkColor = isDark ? '#52525b' : '#d4d4d8';
+    const strokeColor = isDark ? '#18181b' : '#ffffff';
+
     const link = g.append('g')
-      .attr('stroke', '#999')
+      .attr('stroke', linkColor)
       .attr('stroke-opacity', 0.6)
       .selectAll('line')
       .data(links)
       .join('line');
 
-    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+    const colorScale = d3.scaleOrdinal([accentColor, '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d']);
 
     const node = g.append('g')
-      .attr('stroke', '#fff')
+      .attr('stroke', strokeColor)
       .attr('stroke-width', 1.5)
       .selectAll('circle')
       .data(nodes)
@@ -133,22 +139,23 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({ data }) => {
     return () => {
       simulation.stop();
     };
-  }, [data]);
+  }, [data, theme, accentColor]);
 
   return (
-    <div className="relative w-full h-[600px] bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+    <div className="relative w-full h-[600px] bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
       <svg ref={svgRef} className="w-full h-full" />
       {selectedNode && (
-        <div className="absolute top-4 right-4 bg-zinc-800 p-4 rounded-lg border border-zinc-700 shadow-lg text-sm text-zinc-200 max-w-xs">
-          <h4 className="font-bold text-white mb-2">Node Details</h4>
-          <p><span className="text-zinc-400">ID:</span> {selectedNode.fullId || selectedNode.id}</p>
-          <p><span className="text-zinc-400">Level:</span> {selectedNode.group}</p>
-          {selectedNode.value && <p><span className="text-zinc-400">Count:</span> {selectedNode.value}</p>}
+        <div className="absolute top-4 right-4 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-lg text-sm text-zinc-700 dark:text-zinc-200 max-w-xs">
+          <h4 className="font-bold text-zinc-900 dark:text-white mb-2">{t('nodeDetails')}</h4>
+          <p><span className="text-zinc-500 dark:text-zinc-400">{t('id')}:</span> {selectedNode.fullId || selectedNode.id}</p>
+          <p><span className="text-zinc-500 dark:text-zinc-400">{t('level')}:</span> {selectedNode.group}</p>
+          {selectedNode.value && <p><span className="text-zinc-500 dark:text-zinc-400">{t('count')}:</span> {selectedNode.value}</p>}
           <button 
-            className="mt-3 text-xs bg-zinc-700 hover:bg-zinc-600 px-2 py-1 rounded"
+            className="mt-3 text-xs text-white px-2 py-1 rounded transition-colors"
+            style={{ backgroundColor: accentColor }}
             onClick={() => setSelectedNode(null)}
           >
-            Close
+            {t('close')}
           </button>
         </div>
       )}
